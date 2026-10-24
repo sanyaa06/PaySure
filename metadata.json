@@ -1,0 +1,6 @@
+{
+  "name": "PaySure — Payment Reliability & Monitoring Platform",
+  "description": "Simulated payment-processing platform demonstrating how financial systems maintain correctness, idempotency, and observability under failure.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
