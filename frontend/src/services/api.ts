@@ -1,4 +1,13 @@
-import { HealthCheckResult, ReadinessCheckResult } from '../types';
+import {
+  AuthorizePaymentInput,
+  CreatePaymentInput,
+  HealthCheckResult,
+  PaymentEventRecord,
+  PaymentListResponse,
+  PaymentRecord,
+  ReadinessCheckResult,
+  RefundPaymentInput,
+} from '../types';
 
 // Default to localhost:8000 (FastAPI dev server) or override from Vite environment
 export const DEFAULT_API_BASE_URL = 
@@ -12,6 +21,65 @@ export function getApiBaseUrl(): string {
 
 export function setApiBaseUrl(url: string): void {
   currentApiBaseUrl = url.trim().replace(/\/+$/, '');
+}
+
+function parseErrorMessage(payload: any): string {
+  if (!payload) {
+    return 'Request failed.';
+  }
+
+  if (typeof payload.detail === 'string') {
+    return payload.detail;
+  }
+
+  if (Array.isArray(payload.detail)) {
+    return payload.detail
+      .map((item: any) => item.msg || item.error || JSON.stringify(item))
+      .join('; ');
+  }
+
+  if (payload.message) {
+    return payload.message;
+  }
+
+  if (payload.error_code) {
+    return `${payload.error_code}: ${payload.message || 'Request failed.'}`;
+  }
+
+  if (payload.errors) {
+    return Array.isArray(payload.errors)
+      ? payload.errors.map((item: any) => item.msg || JSON.stringify(item)).join('; ')
+      : JSON.stringify(payload.errors);
+  }
+
+  return 'Request failed.';
+}
+
+async function requestJson<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const response = await fetch(`${currentApiBaseUrl}${path}`, {
+    ...options,
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    },
+  });
+
+  const text = await response.text();
+  let payload: any = null;
+  if (text) {
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      payload = { raw: text };
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(parseErrorMessage(payload));
+  }
+
+  return payload as T;
 }
 
 export async function checkBackendHealth(): Promise<HealthCheckResult> {
@@ -101,3 +169,62 @@ export async function checkBackendReadiness(): Promise<ReadinessCheckResult> {
     };
   }
 }
+
+export async function listPayments(params: { status?: string; limit?: number; offset?: number } = {}): Promise<PaymentListResponse> {
+  const query = new URLSearchParams();
+
+  if (params.status) {
+    query.set('status', params.status);
+  }
+  if (params.limit) {
+    query.set('limit', String(params.limit));
+  }
+  if (params.offset) {
+    query.set('offset', String(params.offset));
+  }
+
+  const queryString = query.toString();
+  return requestJson<PaymentListResponse>(`/api/v1/payments${queryString ? `?${queryString}` : ''}`);
+}
+
+export async function createPayment(payload: CreatePaymentInput): Promise<PaymentRecord> {
+  return requestJson<PaymentRecord>('/api/v1/payments', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getPayment(paymentId: string): Promise<PaymentRecord> {
+  return requestJson<PaymentRecord>(`/api/v1/payments/${paymentId}`);
+}
+
+export async function authorizePayment(paymentId: string, payload: AuthorizePaymentInput = { processor_outcome: 'APPROVED' }): Promise<PaymentRecord> {
+  return requestJson<PaymentRecord>(`/api/v1/payments/${paymentId}/authorize`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function capturePayment(paymentId: string): Promise<PaymentRecord> {
+  return requestJson<PaymentRecord>(`/api/v1/payments/${paymentId}/capture`, {
+    method: 'POST',
+  });
+}
+
+export async function cancelPayment(paymentId: string): Promise<PaymentRecord> {
+  return requestJson<PaymentRecord>(`/api/v1/payments/${paymentId}/cancel`, {
+    method: 'POST',
+  });
+}
+
+export async function refundPayment(paymentId: string, payload: RefundPaymentInput): Promise<PaymentRecord> {
+  return requestJson<PaymentRecord>(`/api/v1/payments/${paymentId}/refund`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getPaymentEvents(paymentId: string): Promise<PaymentEventRecord[]> {
+  return requestJson<PaymentEventRecord[]>(`/api/v1/payments/${paymentId}/events`);
+}
+

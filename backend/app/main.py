@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -73,7 +74,7 @@ app.add_exception_handler(PaySureException, paysure_exception_handler)
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Formats Pydantic request validation failures into standard error format."""
-    details = {"errors": exc.errors()}
+    details = {"errors": jsonable_encoder(exc.errors())}
     return build_error_response(
         request=request,
         error_code="VALIDATION_ERROR",

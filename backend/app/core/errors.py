@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from fastapi import Request, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
@@ -47,6 +48,28 @@ class InvalidStateTransitionError(PaySureException):
         )
 
 
+class PaymentNotFoundError(PaySureException):
+    """Raised when a payment lookup misses the requested record."""
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message,
+            error_code="PAYMENT_NOT_FOUND",
+            status_code=status.HTTP_404_NOT_FOUND,
+            details=details or {}
+        )
+
+
+class PaymentConflictError(PaySureException):
+    """Raised when duplicate payment requests conflict with a different payload."""
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message,
+            error_code="PAYMENT_CONFLICT",
+            status_code=status.HTTP_409_CONFLICT,
+            details=details or {}
+        )
+
+
 class DatabaseConnectivityError(PaySureException):
     """Raised when the database connection fails readiness checks."""
     def __init__(self, message: str = "Database connection unavailable", details: Optional[Dict[str, Any]] = None):
@@ -79,7 +102,7 @@ def build_error_response(
     error_payload = ErrorResponse(
         error_code=error_code,
         message=message,
-        details=details,
+        details=jsonable_encoder(details) if details is not None else None,
         request_id=request_id,
         timestamp=datetime.now(timezone.utc)
     )

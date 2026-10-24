@@ -31,3 +31,50 @@ export type PaymentStatus =
   | 'CANCELLED'
   | 'PARTIALLY_REFUNDED'
   | 'REFUNDED';
+
+export interface PaymentRecord {
+  id: string;
+  payment_id: string;
+  amount: number;
+  currency: string;
+  status: PaymentStatus;
+  idempotency_key: string;
+  captured_amount: number;
+  refunded_amount: number;
+  client_id?: string | null;
+  request_hash?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaymentEventRecord {
+  id: string;
+  payment_id: string;
+  event_type: string;
+  previous_status?: PaymentStatus | null;
+  new_status: PaymentStatus;
+  event_metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface PaymentListResponse {
+  items: PaymentRecord[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface CreatePaymentInput {
+  amount: number;
+  currency: string;
+  idempotency_key: string;
+  client_id?: string | null;
+}
+
+export interface AuthorizePaymentInput {
+  processor_outcome?: 'APPROVED' | 'DECLINED';
+}
+
+export interface RefundPaymentInput {
+  amount: number;
+}

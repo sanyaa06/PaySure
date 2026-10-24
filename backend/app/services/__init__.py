@@ -1,2 +1,3 @@
-# PaySure Domain Services Package (Phase 2+)
-# In Phase 1, payment processing and business logic services are not yet initialized.
+from app.services import payment_service
+
+__all__ = ["payment_service"]
