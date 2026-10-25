@@ -54,6 +54,37 @@ RECONCILIATION_TOTAL = Counter(
     labelnames=("outcome",),
 )
 
+ROUTING_DECISIONS_TOTAL = Counter(
+    "paysure_routing_decisions_total",
+    "Total routing decisions emitted by PaySure.",
+    labelnames=("processor_id", "routing_policy", "outcome"),
+)
+
+PROCESSOR_REQUESTS_TOTAL = Counter(
+    "paysure_processor_requests_total",
+    "Total processor requests observed by operation type and outcome.",
+    labelnames=("processor_id", "operation_type", "outcome"),
+)
+
+PROCESSOR_REQUEST_DURATION_SECONDS = Histogram(
+    "paysure_processor_request_duration_seconds",
+    "Time spent issuing processor requests in seconds.",
+    labelnames=("processor_id", "operation_type", "outcome"),
+    buckets=(0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0),
+)
+
+PROCESSOR_FAILOVERS_TOTAL = Counter(
+    "paysure_processor_failovers_total",
+    "Total failover events across processors.",
+    labelnames=("from_processor", "to_processor", "reason"),
+)
+
+CIRCUIT_BREAKER_TRANSITIONS_TOTAL = Counter(
+    "paysure_circuit_breaker_transitions_total",
+    "Total circuit-breaker transitions observed.",
+    labelnames=("processor_id", "from_state", "to_state"),
+)
+
 CHAOS_EXPERIMENTS_TOTAL = Counter(
     "paysure_chaos_experiments_total",
     "Total chaos experiments by scenario and final status.",
@@ -83,6 +114,23 @@ def record_retry(operation: str, outcome: str) -> None:
 
 def record_reconciliation(outcome: str) -> None:
     RECONCILIATION_TOTAL.labels(outcome=outcome).inc()
+
+
+def record_routing_decision(processor_id: str, routing_policy: str, outcome: str) -> None:
+    ROUTING_DECISIONS_TOTAL.labels(processor_id=processor_id or "unknown", routing_policy=routing_policy or "unknown", outcome=outcome or "unknown").inc()
+
+
+def record_processor_request(processor_id: str, operation_type: str, outcome: str, duration_seconds: float) -> None:
+    PROCESSOR_REQUESTS_TOTAL.labels(processor_id=processor_id or "unknown", operation_type=operation_type or "unknown", outcome=outcome or "unknown").inc()
+    PROCESSOR_REQUEST_DURATION_SECONDS.labels(processor_id=processor_id or "unknown", operation_type=operation_type or "unknown", outcome=outcome or "unknown").observe(duration_seconds)
+
+
+def record_processor_failover(from_processor: str, to_processor: str, reason: str) -> None:
+    PROCESSOR_FAILOVERS_TOTAL.labels(from_processor=from_processor or "unknown", to_processor=to_processor or "unknown", reason=reason or "unknown").inc()
+
+
+def record_circuit_breaker_transition(processor_id: str, from_state: str, to_state: str) -> None:
+    CIRCUIT_BREAKER_TRANSITIONS_TOTAL.labels(processor_id=processor_id or "unknown", from_state=from_state or "unknown", to_state=to_state or "unknown").inc()
 
 
 def record_chaos_experiment(scenario_id: str, status: str) -> None:

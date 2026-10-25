@@ -7,7 +7,7 @@
 [![React](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-> **Notice**: This repository is currently in **Phase 1: Architecture & Project Foundation**. All payment transactions and processor networks in PaySure are simulated for reliability, fault-injection, and observability engineering. No actual bank credentials, cardholder data, or money transfers are handled.
+> **Notice**: This repository is currently in **Phase 8: Final Engineering Validation & Production Polish**. All payment transactions and processor networks in PaySure remain simulated for reliability, fault-injection, and observability engineering. No actual bank credentials, cardholder data, or money transfers are handled, and no cloud deployment is configured in this repository.
 
 ---
 

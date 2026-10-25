@@ -169,6 +169,51 @@ export interface MonitoringAlertsResponse {
   };
 }
 
+export interface ProcessorOverviewRecord {
+  processor_id: string;
+  display_name: string;
+  status: string;
+  availability: number;
+  success_rate: number;
+  latency_ms: number;
+  supported_currencies: string[];
+  supported_operations: string[];
+  last_health_check?: string | null;
+}
+
+export interface RoutingPolicyRecord {
+  policy: string;
+  name: string;
+  description: string;
+}
+
+export interface RoutingDecisionRecord {
+  id: string;
+  payment_id: string;
+  logical_operation_id: string;
+  processor_id: string;
+  routing_policy: string;
+  selection_reason: string;
+  observed_processor_health?: string | null;
+  estimated_latency_ms?: number | null;
+  outcome?: string | null;
+  actual_latency_ms?: number | null;
+  created_at: string;
+}
+
+export interface RoutingMetricRecord {
+  total_decisions: number;
+  processors: ProcessorOverviewRecord[];
+  policies: string[];
+  benchmark: Record<string, any>;
+}
+
+export interface RoutingSimulationRecord {
+  scenario: string;
+  benchmark: Record<string, any>;
+  processors: ProcessorOverviewRecord[];
+}
+
 export interface PaymentListResponse {
   items: PaymentRecord[];
   total: number;

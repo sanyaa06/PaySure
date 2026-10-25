@@ -11,7 +11,12 @@ import {
   PaymentEventRecord,
   PaymentListResponse,
   PaymentRecord,
+  ProcessorOverviewRecord,
   ReadinessCheckResult,
+  RoutingDecisionRecord,
+  RoutingMetricRecord,
+  RoutingPolicyRecord,
+  RoutingSimulationRecord,
 } from '../types';
 
 // Default to localhost:8000 (FastAPI dev server) or override from Vite environment
@@ -206,4 +211,28 @@ export async function fetchMonitoringAlerts(): Promise<MonitoringAlertsResponse>
 
 export async function fetchMonitoringHealth(): Promise<{ status: string; database: string; last_successful_refresh?: string }> {
   return fetchJson<{ status: string; database: string; last_successful_refresh?: string }>(`${currentApiBaseUrl}/api/v1/monitoring/health`);
+}
+
+export async function fetchProcessorPolicies(): Promise<RoutingPolicyRecord[]> {
+  return fetchJson<RoutingPolicyRecord[]>(`${currentApiBaseUrl}/api/v1/routing/policies`);
+}
+
+export async function fetchProcessorOverview(): Promise<ProcessorOverviewRecord[]> {
+  return fetchJson<ProcessorOverviewRecord[]>(`${currentApiBaseUrl}/api/v1/routing/processors`);
+}
+
+export async function fetchRoutingDecisions(limit = 20, offset = 0): Promise<RoutingDecisionRecord[]> {
+  return fetchJson<RoutingDecisionRecord[]>(`${currentApiBaseUrl}/api/v1/routing/decisions?limit=${limit}&offset=${offset}`);
+}
+
+export async function fetchRoutingMetrics(): Promise<RoutingMetricRecord> {
+  return fetchJson<RoutingMetricRecord>(`${currentApiBaseUrl}/api/v1/routing/metrics`);
+}
+
+export async function runRoutingSimulation(scenario = 'all_healthy', iterations = 25): Promise<RoutingSimulationRecord> {
+  return fetchJson<RoutingSimulationRecord>(`${currentApiBaseUrl}/api/v1/routing/simulations`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ scenario, iterations }),
+  });
 }

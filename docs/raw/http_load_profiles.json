@@ -1,0 +1,53 @@
+{
+  "base_url": "http://localhost:8000",
+  "profiles": [
+    {
+      "concurrency": 10,
+      "total_jobs": 30,
+      "total_requests": 150,
+      "elapsed_seconds": 0.4955,
+      "requests_per_second": 302.716,
+      "p50_latency_ms": 115.461,
+      "p95_latency_ms": 223.474,
+      "p99_latency_ms": 224.299,
+      "error_rate": 0.0,
+      "errors": 0
+    },
+    {
+      "concurrency": 25,
+      "total_jobs": 75,
+      "total_requests": 375,
+      "elapsed_seconds": 0.9246,
+      "requests_per_second": 405.5609,
+      "p50_latency_ms": 300.932,
+      "p95_latency_ms": 337.895,
+      "p99_latency_ms": 350.668,
+      "error_rate": 0.0,
+      "errors": 0
+    },
+    {
+      "concurrency": 50,
+      "total_jobs": 150,
+      "total_requests": 750,
+      "elapsed_seconds": 1.8585,
+      "requests_per_second": 403.5437,
+      "p50_latency_ms": 553.446,
+      "p95_latency_ms": 782.1,
+      "p99_latency_ms": 814.28,
+      "error_rate": 0.0,
+      "errors": 0
+    },
+    {
+      "concurrency": 100,
+      "total_jobs": 300,
+      "total_requests": 1500,
+      "elapsed_seconds": 3.3303,
+      "requests_per_second": 450.4058,
+      "p50_latency_ms": 1088.694,
+      "p95_latency_ms": 1136.046,
+      "p99_latency_ms": 1165.334,
+      "error_rate": 0.0,
+      "errors": 0
+    }
+  ]
+}

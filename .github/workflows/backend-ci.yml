@@ -7,8 +7,8 @@ on:
     branches: [ "main", "develop" ]
 
 jobs:
-  test:
-    name: Lint, Test & Validate Models
+  backend-tests:
+    name: Backend, lint, migrations, and security validation
     runs-on: ubuntu-latest
 
     services:
@@ -36,19 +36,34 @@ jobs:
           python-version: "3.12"
           cache: "pip"
 
-      - name: Install dependencies
+      - name: Install backend dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
-          pip install ruff mypy
+          pip install ruff mypy bandit[toml] pip-audit
 
-      - name: Lint and Code Formatting with Ruff
+      - name: Measure backend coverage
+        env:
+          POSTGRES_SERVER: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: paysure_test_db
+        run: |
+          pytest --cov=backend/app --cov-report=term-missing --cov-report=xml backend/tests
+
+      - name: Lint and format validation with Ruff
         run: |
           ruff check backend/app backend/tests
 
       - name: Type checking with mypy
         run: |
           mypy --ignore-missing-imports backend/app
+
+      - name: Security scan
+        run: |
+          bandit -r backend/app -x backend/tests -q
+          pip-audit --requirement backend/requirements.txt
 
       - name: Run Database Migrations with Alembic
         env:
@@ -70,3 +85,29 @@ jobs:
           POSTGRES_DB: paysure_test_db
         run: |
           pytest backend/tests -v --durations=10
+
+  frontend-validation:
+    name: Frontend lint and production build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Type-check frontend
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Build frontend bundle
+        working-directory: frontend
+        run: npm run build

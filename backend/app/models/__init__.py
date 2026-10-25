@@ -4,6 +4,7 @@ from app.models.chaos import ChaosExperiment, ChaosExperimentEvent, ChaosInvaria
 from app.models.payment import Payment
 from app.models.payment_event import PaymentEvent
 from app.models.processor_attempt import ProcessorAttempt
+from app.models.processor_routing import ProcessorRoutingDecision
 
 __all__ = [
     "Base",
@@ -12,6 +13,7 @@ __all__ = [
     "Payment",
     "PaymentEvent",
     "ProcessorAttempt",
+    "ProcessorRoutingDecision",
     "ChaosExperiment",
     "ChaosExperimentEvent",
     "ChaosInvariantResult",

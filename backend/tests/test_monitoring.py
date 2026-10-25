@@ -44,6 +44,9 @@ def test_metrics_endpoint_exposes_prometheus_metrics(client):
     content = response.text
     assert 'paysure_http_requests_total' in content
     assert 'paysure_payment_operations_total' in content
+    assert 'paysure_routing_decisions_total' in content
+    assert 'paysure_processor_attempts_total' in content
+    assert 'paysure_circuit_breaker_transitions_total' in content
 
 
 def test_stuck_operations_detects_stale_created_payment(client, db_session):

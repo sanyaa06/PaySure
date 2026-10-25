@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-import random
+import secrets
 import time
 from dataclasses import dataclass
 from typing import Any, Callable, Optional, TypeVar
 
 T = TypeVar("T")
+_secure_random = secrets.SystemRandom()
 
 
 @dataclass(frozen=True)
@@ -89,7 +90,7 @@ def execute_with_retry(
                 retry_policy.max_delay_seconds,
             )
             if retry_policy.jitter_ratio > 0:
-                jitter = delay * retry_policy.jitter_ratio * random.uniform(-1.0, 1.0)
+                jitter = delay * retry_policy.jitter_ratio * _secure_random.uniform(-1.0, 1.0)
                 delay = max(0.0, delay + jitter)
             time.sleep(delay)
 
