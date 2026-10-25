@@ -3,6 +3,10 @@ import {
   CreatePaymentInput,
   HealthCheckResult,
   PaymentEventRecord,
+  ChaosExperimentListResponse,
+  ChaosExperimentRecord,
+  ChaosScenario,
+  MonitoringDashboardData,
   PaymentListResponse,
   PaymentRecord,
   ReadinessCheckResult,
@@ -170,6 +174,26 @@ export async function checkBackendReadiness(): Promise<ReadinessCheckResult> {
   }
 }
 
+export async function getMonitoringDashboard(): Promise<MonitoringDashboardData> {
+  const [summary, timeseries, reliability, latency, stuck, alerts] = await Promise.all([
+    requestJson<any>('/api/v1/monitoring/summary'),
+    requestJson<any>('/api/v1/monitoring/transactions/timeseries?window=24h'),
+    requestJson<any>('/api/v1/monitoring/reliability'),
+    requestJson<any>('/api/v1/monitoring/latency'),
+    requestJson<any>('/api/v1/monitoring/stuck-operations'),
+    requestJson<any>('/api/v1/monitoring/alerts'),
+  ]);
+
+  return {
+    summary,
+    timeseries,
+    reliability,
+    latency,
+    stuck,
+    alerts,
+  };
+}
+
 export async function listPayments(params: { status?: string; limit?: number; offset?: number } = {}): Promise<PaymentListResponse> {
   const query = new URLSearchParams();
 
@@ -226,5 +250,24 @@ export async function refundPayment(paymentId: string, payload: RefundPaymentInp
 
 export async function getPaymentEvents(paymentId: string): Promise<PaymentEventRecord[]> {
   return requestJson<PaymentEventRecord[]>(`/api/v1/payments/${paymentId}/events`);
+}
+
+export async function listChaosScenarios(): Promise<ChaosScenario[]> {
+  return requestJson<ChaosScenario[]>('/api/v1/chaos/scenarios');
+}
+
+export async function listChaosExperiments(limit = 20, offset = 0): Promise<ChaosExperimentListResponse> {
+  return requestJson<ChaosExperimentListResponse>(`/api/v1/chaos/experiments?limit=${limit}&offset=${offset}`);
+}
+
+export async function createChaosExperiment(payload: Record<string, unknown>): Promise<ChaosExperimentRecord> {
+  return requestJson<ChaosExperimentRecord>('/api/v1/chaos/experiments', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getChaosExperiment(experimentId: string): Promise<ChaosExperimentRecord> {
+  return requestJson<ChaosExperimentRecord>(`/api/v1/chaos/experiments/${experimentId}`);
 }
 

@@ -34,6 +34,7 @@ class PaymentCreateRequest(BaseModel):
 
 class AuthorizePaymentRequest(BaseModel):
     processor_outcome: Optional[str] = Field(default="APPROVED", description="Deterministic processor outcome. Supports APPROVED or DECLINED.")
+    idempotency_key: Optional[str] = Field(default=None, min_length=1, max_length=128, description="Optional operation-scoped idempotency key for duplicate authorization retries.")
 
     @field_validator("processor_outcome")
     @classmethod
@@ -48,6 +49,7 @@ class AuthorizePaymentRequest(BaseModel):
 
 class RefundRequest(BaseModel):
     amount: int = Field(..., gt=0, description="Amount to refund in minor units.")
+    idempotency_key: Optional[str] = Field(default=None, min_length=1, max_length=128, description="Optional operation-scoped idempotency key for duplicate refund retries.")
 
 
 class PaymentEventResponse(BaseModel):

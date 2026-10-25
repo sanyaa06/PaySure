@@ -184,6 +184,10 @@ def authorize_payment(db: Session, payment_id: UUID, request: Optional[Authorize
 def capture_payment(db: Session, payment_id: UUID) -> Payment:
     payment = _get_payment_or_404(db, payment_id)
     current_status = PaymentStatus(payment.status)
+
+    if payment.status == PaymentStatus.CAPTURED.value and payment.captured_amount >= payment.amount:
+        return payment
+
     validate_transition(current_status, PaymentStatus.CAPTURED)
 
     if payment.captured_amount > 0:
@@ -231,6 +235,10 @@ def cancel_payment(db: Session, payment_id: UUID) -> Payment:
 def refund_payment(db: Session, payment_id: UUID, request: RefundRequest) -> Payment:
     payment = _get_payment_or_404(db, payment_id)
     current_status = PaymentStatus(payment.status)
+
+    if payment.status in {PaymentStatus.PARTIALLY_REFUNDED.value, PaymentStatus.REFUNDED.value} and payment.refunded_amount >= request.amount:
+        return payment
+
     if request.amount <= 0:
         raise ValueError("Refund amount must be strictly greater than zero minor units.")
 

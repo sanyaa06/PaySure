@@ -23,6 +23,12 @@ class Payment(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     """
     __tablename__ = "payments"
 
+    def __init__(self, **kwargs):
+        created_at = kwargs.get("created_at")
+        if created_at is not None and "updated_at" not in kwargs:
+            kwargs["updated_at"] = created_at
+        super().__init__(**kwargs)
+
     # Financial details in integer minor units (e.g., 1000 cents = $10.00 USD)
     amount: Mapped[int] = mapped_column(
         BigInteger,

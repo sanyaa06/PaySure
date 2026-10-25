@@ -54,6 +54,12 @@ def authorize_payment(
     description="Captures the full amount for an AUTHORIZED payment and records the PAYMENT_CAPTURED event.",
 )
 def capture_payment(payment_id: UUID, db: Session = Depends(get_db)):
+    payment = payment_service.get_payment(db, payment_id)
+    if payment.status == "CAPTURED" and payment.captured_amount >= payment.amount:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Payment has already been captured.",
+        )
     payment = payment_service.capture_payment(db, payment_id)
     return PaymentResponse.model_validate(payment_service._payment_to_response(payment))
 
@@ -76,6 +82,12 @@ def cancel_payment(payment_id: UUID, db: Session = Depends(get_db)):
     description="Applies a refund against the captured amount while maintaining state invariants.",
 )
 def refund_payment(payment_id: UUID, request: RefundRequest, db: Session = Depends(get_db)):
+    payment = payment_service.get_payment(db, payment_id)
+    if payment.status in {"PARTIALLY_REFUNDED", "REFUNDED"} and payment.refunded_amount >= request.amount:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This refund amount has already been processed for the payment.",
+        )
     payment = payment_service.refund_payment(db, payment_id, request)
     return PaymentResponse.model_validate(payment_service._payment_to_response(payment))
 
