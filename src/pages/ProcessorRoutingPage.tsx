@@ -1,22 +1,42 @@
 import React from 'react';
-import { GitFork } from 'lucide-react';
-import { EmptyState } from '../components/EmptyState';
+import { GitFork, Route } from 'lucide-react';
+import { PageHeader } from '../components/PageHeader';
 
 export const ProcessorRoutingPage: React.FC = () => {
   return (
-    <div className="space-y-6 max-w-6xl">
-      <EmptyState
-        icon={GitFork}
-        title="Processor Routing Rules Not Configured"
-        description="Smart multi-processor routing, fee-optimization logic, and automated health-checked failover between simulated gateway endpoints will be introduced in Phase 7."
-        phaseNotice="Phase 7: Multi-Processor Routing & Smart Fallback"
-        details={[
-          { label: "Routing Strategy", value: "Priority, round-robin, and lowest-latency dispatch" },
-          { label: "Active Probing", value: "Continuous synthetic heartbeat across processors" },
-          { label: "Degradation Fallback", value: "Automatic rerouting away from degraded routes" },
-          { label: "Simulated Processors", value: "Visa Direct, Mastercard Send, and Sandbox Gateways" }
-        ]}
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="Upcoming"
+        title="Processor Routing"
+        description="This phase is not implemented in the current backend or UI scope. The page is intentionally kept as a polished placeholder without fabricated routing metrics."
       />
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-6">
+        <div className="flex items-center gap-3">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-slate-700">
+            <Route className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="text-lg font-semibold text-slate-900">Routing engine deferred</div>
+            <div className="text-sm text-slate-600">No processor health data or routing controls are presented because this feature is intentionally out of scope for the current build.</div>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+            <div className="text-[11px] uppercase tracking-[0.12em] text-slate-500">Routing mode</div>
+            <div className="mt-2 font-medium text-slate-900">Not configured</div>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+            <div className="text-[11px] uppercase tracking-[0.12em] text-slate-500">Fallback policy</div>
+            <div className="mt-2 font-medium text-slate-900">Unavailable</div>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+            <div className="text-[11px] uppercase tracking-[0.12em] text-slate-500">Processor health</div>
+            <div className="mt-2 font-medium text-slate-900">Unavailable</div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

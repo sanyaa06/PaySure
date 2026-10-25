@@ -31,6 +31,8 @@ def get_scenarios() -> list[ChaosScenarioResponse]:
 def create_experiment(request: ChaosExperimentCreateRequest, db: Session = Depends(get_db)):
     try:
         experiment = execute_experiment(db, request.model_dump())
+        db.commit()
+        db.refresh(experiment)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
     except Exception as exc:

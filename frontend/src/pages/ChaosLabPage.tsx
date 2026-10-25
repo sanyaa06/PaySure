@@ -27,6 +27,18 @@ export const ChaosLabPage: React.FC = () => {
     void loadData();
   }, []);
 
+  useEffect(() => {
+    if (!history.some((experiment) => experiment.status === 'RUNNING')) {
+      return undefined;
+    }
+
+    const interval = window.setInterval(() => {
+      void loadData();
+    }, 5000);
+
+    return () => window.clearInterval(interval);
+  }, [history]);
+
   const selectedScenario = useMemo(
     () => scenarios.find((scenario) => scenario.id === selectedScenarioId) ?? scenarios[0],
     [scenarios, selectedScenarioId]

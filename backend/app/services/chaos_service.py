@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
@@ -169,6 +169,27 @@ def _finalize_experiment(db: Session, experiment: ChaosExperiment, verdict: str,
     return experiment
 
 
+def mark_stale_experiments(db: Session, stale_after_seconds: int = 300, now: Optional[datetime] = None) -> int:
+    cutoff = (now or datetime.now(timezone.utc)) - timedelta(seconds=max(stale_after_seconds, 0))
+    stale_rows = db.query(ChaosExperiment).filter(
+        ChaosExperiment.status == "RUNNING",
+        ChaosExperiment.started_at <= cutoff,
+    ).all()
+
+    for experiment in stale_rows:
+        _finalize_experiment(
+            db,
+            experiment,
+            "FAILED",
+            "Experiment exceeded the execution timeout and was marked stale; no terminal state was persisted.",
+        )
+
+    if stale_rows:
+        db.commit()
+
+    return len(stale_rows)
+
+
 def _run_duplicate_payment_request(db: Session, experiment: ChaosExperiment) -> List[Payment]:
     payload = _build_payment_create_request(amount=4500, idempotency_key=f"chaos-{experiment.id}-dup")
     first = payment_service.create_payment(db, payment_service.PaymentCreateRequest(**payload))
@@ -328,15 +349,20 @@ def execute_experiment(db: Session, config: Dict[str, Any]) -> ChaosExperiment:
 
         _add_event(db, experiment, "INVARIANTS_CHECKED", "Persisted payment invariants were evaluated.", {"verdict": final_verdict})
         _finalize_experiment(db, experiment, final_verdict)
+        db.commit()
+        db.refresh(experiment)
         return experiment
     except Exception as exc:  # pragma: no cover - exercised indirectly by tests
         error_summary = str(exc)
         _add_event(db, experiment, "EXPERIMENT_FAILED", error_summary, {"scenario_id": scenario_id})
         _finalize_experiment(db, experiment, "FAILED", error_summary)
+        db.commit()
+        db.refresh(experiment)
         raise
 
 
 def list_experiments(db: Session, limit: int = 20, offset: int = 0) -> Dict[str, Any]:
+    mark_stale_experiments(db)
     query = db.query(ChaosExperiment)
     total = query.count()
     items = query.order_by(ChaosExperiment.started_at.desc()).offset(offset).limit(limit).all()
@@ -349,6 +375,7 @@ def list_experiments(db: Session, limit: int = 20, offset: int = 0) -> Dict[str,
 
 
 def get_experiment_detail(db: Session, experiment_id: UUID) -> ChaosExperiment:
+    mark_stale_experiments(db)
     experiment = db.query(ChaosExperiment).filter(ChaosExperiment.id == experiment_id).one_or_none()
     if experiment is None:
         raise ValueError(f"Experiment {experiment_id} was not found.")

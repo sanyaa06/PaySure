@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -34,8 +35,8 @@ class ChaosExperimentCreateRequest(ChaosExperimentConfig):
 
 
 class ChaosExperimentEventResponse(BaseModel):
-    id: str
-    experiment_id: str
+    id: UUID
+    experiment_id: UUID
     timestamp: datetime
     event_type: str
     description: str
@@ -49,8 +50,8 @@ class ChaosExperimentEventResponse(BaseModel):
 
 
 class ChaosInvariantResultResponse(BaseModel):
-    id: str
-    experiment_id: str
+    id: UUID
+    experiment_id: UUID
     invariant_name: str
     expected_condition: str
     observed_condition: str
@@ -61,7 +62,7 @@ class ChaosInvariantResultResponse(BaseModel):
 
 
 class ChaosExperimentResponse(BaseModel):
-    id: str
+    id: UUID
     scenario_id: str
     status: str
     configuration: Dict[str, Any] = Field(default_factory=dict)

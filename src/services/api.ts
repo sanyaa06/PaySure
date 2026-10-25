@@ -1,4 +1,18 @@
-import { HealthCheckResult, ReadinessCheckResult } from '../types';
+import {
+  ChaosExperimentRecord,
+  ChaosListResponse,
+  ChaosScenario,
+  HealthCheckResult,
+  MonitoringAlertsResponse,
+  MonitoringLatency,
+  MonitoringReliability,
+  MonitoringSummary,
+  MonitoringTimeSeriesBucket,
+  PaymentEventRecord,
+  PaymentListResponse,
+  PaymentRecord,
+  ReadinessCheckResult,
+} from '../types';
 
 // Default to localhost:8000 (FastAPI dev server) or override from Vite environment
 export const DEFAULT_API_BASE_URL = 
@@ -12,6 +26,20 @@ export function getApiBaseUrl(): string {
 
 export function setApiBaseUrl(url: string): void {
   currentApiBaseUrl = url.trim().replace(/\/+$/, '');
+}
+
+async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    headers: { Accept: 'application/json', ...(init?.headers || {}) },
+    ...init,
+  });
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(detail || `${res.status} ${res.statusText}`);
+  }
+
+  return (await res.json()) as T;
 }
 
 export async function checkBackendHealth(): Promise<HealthCheckResult> {
@@ -100,4 +128,82 @@ export async function checkBackendReadiness(): Promise<ReadinessCheckResult> {
         : (err.message || 'Backend service unreachable'),
     };
   }
+}
+
+export async function fetchPaymentList(status?: string): Promise<PaymentListResponse> {
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  params.set('limit', '20');
+  params.set('offset', '0');
+  return fetchJson<PaymentListResponse>(`${currentApiBaseUrl}/api/v1/payments?${params.toString()}`);
+}
+
+export async function createPayment(payload: Record<string, unknown>): Promise<PaymentRecord> {
+  return fetchJson<PaymentRecord>(`${currentApiBaseUrl}/api/v1/payments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchPaymentEvents(paymentId: string): Promise<PaymentEventRecord[]> {
+  return fetchJson<PaymentEventRecord[]>(`${currentApiBaseUrl}/api/v1/payments/${paymentId}/events`);
+}
+
+export async function refundPayment(paymentId: string, payload: Record<string, unknown>): Promise<PaymentRecord> {
+  return fetchJson<PaymentRecord>(`${currentApiBaseUrl}/api/v1/payments/${paymentId}/refund`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function cancelPayment(paymentId: string): Promise<PaymentRecord> {
+  return fetchJson<PaymentRecord>(`${currentApiBaseUrl}/api/v1/payments/${paymentId}/cancel`, {
+    method: 'POST',
+  });
+}
+
+export async function fetchChaosScenarios(): Promise<ChaosScenario[]> {
+  return fetchJson<ChaosScenario[]>(`${currentApiBaseUrl}/api/v1/chaos/scenarios`);
+}
+
+export async function fetchChaosHistory(limit = 10): Promise<ChaosListResponse> {
+  return fetchJson<ChaosListResponse>(`${currentApiBaseUrl}/api/v1/chaos/experiments?limit=${limit}&offset=0`);
+}
+
+export async function createChaosExperiment(payload: Record<string, unknown>): Promise<ChaosExperimentRecord> {
+  return fetchJson<ChaosExperimentRecord>(`${currentApiBaseUrl}/api/v1/chaos/experiments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchChaosExperiment(id: string): Promise<ChaosExperimentRecord> {
+  return fetchJson<ChaosExperimentRecord>(`${currentApiBaseUrl}/api/v1/chaos/experiments/${id}`);
+}
+
+export async function fetchMonitoringSummary(): Promise<MonitoringSummary> {
+  return fetchJson<MonitoringSummary>(`${currentApiBaseUrl}/api/v1/monitoring/summary`);
+}
+
+export async function fetchMonitoringLatency(): Promise<MonitoringLatency> {
+  return fetchJson<MonitoringLatency>(`${currentApiBaseUrl}/api/v1/monitoring/latency`);
+}
+
+export async function fetchMonitoringReliability(): Promise<MonitoringReliability> {
+  return fetchJson<MonitoringReliability>(`${currentApiBaseUrl}/api/v1/monitoring/reliability`);
+}
+
+export async function fetchMonitoringTimeseries(window: string = '24h'): Promise<{ window: string; items: MonitoringTimeSeriesBucket[] }> {
+  return fetchJson<{ window: string; items: MonitoringTimeSeriesBucket[] }>(`${currentApiBaseUrl}/api/v1/monitoring/transactions/timeseries?window=${window}`);
+}
+
+export async function fetchMonitoringAlerts(): Promise<MonitoringAlertsResponse> {
+  return fetchJson<MonitoringAlertsResponse>(`${currentApiBaseUrl}/api/v1/monitoring/alerts`);
+}
+
+export async function fetchMonitoringHealth(): Promise<{ status: string; database: string; last_successful_refresh?: string }> {
+  return fetchJson<{ status: string; database: string; last_successful_refresh?: string }>(`${currentApiBaseUrl}/api/v1/monitoring/health`);
 }

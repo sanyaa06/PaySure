@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict, List
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 
@@ -28,7 +29,17 @@ def verify_payment_invariants(db: Session, payment_ids: List[Any]) -> List[Dict[
             }
         ]
 
-    payments = db.query(Payment).filter(Payment.id.in_([str(payment_id) for payment_id in payment_ids])).all()
+    normalized_payment_ids = []
+    for payment_id in payment_ids:
+        if isinstance(payment_id, str):
+            try:
+                normalized_payment_ids.append(UUID(payment_id))
+            except ValueError:
+                normalized_payment_ids.append(payment_id)
+        else:
+            normalized_payment_ids.append(payment_id)
+
+    payments = db.query(Payment).filter(Payment.id.in_(normalized_payment_ids)).all()
     if not payments:
         results.append(
             {
@@ -88,7 +99,10 @@ def verify_payment_invariants(db: Session, payment_ids: List[Any]) -> List[Dict[
         last_event = events[-1]
         transition_ok = True
         try:
-            validate_transition(PaymentStatus(last_event.previous_status) if last_event.previous_status else PaymentStatus.CREATED, PaymentStatus(last_event.new_status))
+            if last_event.previous_status is None:
+                transition_ok = last_event.new_status == PaymentStatus.CREATED.value
+            else:
+                validate_transition(PaymentStatus(last_event.previous_status), PaymentStatus(last_event.new_status))
         except Exception:
             transition_ok = False
 

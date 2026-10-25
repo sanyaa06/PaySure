@@ -15,8 +15,22 @@ import { SettingsPage } from './pages/SettingsPage';
 import { NavigationTab, HealthCheckResult, ReadinessCheckResult } from './types';
 import { checkBackendHealth, checkBackendReadiness } from './services/api';
 
+const TAB_FROM_HASH: Record<string, NavigationTab> = {
+  overview: 'overview',
+  transactions: 'transactions',
+  'chaos-lab': 'chaos-lab',
+  monitoring: 'monitoring',
+  'processor-routing': 'processor-routing',
+  settings: 'settings',
+};
+
+const getTabFromHash = (): NavigationTab => {
+  const hash = window.location.hash.replace('#', '').trim();
+  return TAB_FROM_HASH[hash] ?? 'overview';
+};
+
 export default function App() {
-  const [currentTab, setCurrentTab] = useState<NavigationTab>('overview');
+  const [currentTab, setCurrentTab] = useState<NavigationTab>(() => getTabFromHash());
   const [isChecking, setIsChecking] = useState<boolean>(false);
 
   const [health, setHealth] = useState<HealthCheckResult>({
@@ -45,17 +59,29 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const syncFromHash = () => {
+      const nextTab = getTabFromHash();
+      setCurrentTab((prev) => (prev === nextTab ? prev : nextTab));
+    };
+
+    syncFromHash();
+    window.addEventListener('hashchange', syncFromHash);
+    return () => window.removeEventListener('hashchange', syncFromHash);
+  }, []);
+
+  useEffect(() => {
+    window.location.hash = currentTab;
+  }, [currentTab]);
+
+  useEffect(() => {
     pollProbes();
   }, [pollProbes]);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50 text-slate-900">
-      {/* Primary Sidebar Navigation */}
       <Sidebar currentTab={currentTab} onSelectTab={setCurrentTab} />
 
-      {/* Main Content Viewport */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top Header Bar */}
         <Header
           currentTab={currentTab}
           health={health}
@@ -64,7 +90,6 @@ export default function App() {
           onRefreshProbes={pollProbes}
         />
 
-        {/* Dynamic Page Content */}
         <main className="flex-1 overflow-y-auto p-8">
           {currentTab === 'overview' && (
             <OverviewPage
